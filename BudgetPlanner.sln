@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BudgetPlanner.DAL", "BudgetPlanner.DAL\BudgetPlanner.DAL.csproj", "{69765291-A4BD-4C5E-8D03-B3BD13461899}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BudgetPlan.Web", "BudgetPlan.Web\BudgetPlan.Web.csproj", "{6183A25E-C509-4FA1-B8B8-72398D484FBF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69765291-A4BD-4C5E-8D03-B3BD13461899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69765291-A4BD-4C5E-8D03-B3BD13461899}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69765291-A4BD-4C5E-8D03-B3BD13461899}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69765291-A4BD-4C5E-8D03-B3BD13461899}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6183A25E-C509-4FA1-B8B8-72398D484FBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6183A25E-C509-4FA1-B8B8-72398D484FBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6183A25E-C509-4FA1-B8B8-72398D484FBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6183A25E-C509-4FA1-B8B8-72398D484FBF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F60F1D5D-AF44-418F-89F5-A642182848DA}
+	EndGlobalSection
+EndGlobal
