@@ -1,5 +1,6 @@
-﻿using BudgetPlanner.DAL;
+using BudgetPlanner.DAL;
 using BudgetPlanner.DAL.ModelData;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -74,15 +75,87 @@ namespace BudgetPlan.Web.Controllers
 
                 expenditureDataLst.Add(store);
             }
+            var planStatus = expenditureDataLst.Any() ? (budgetStatus ==null ? PlannerStatus.Draft.ToString() : budgetStatus.PlannerStatus.ToString()) : PlannerStatus.New.ToString();
+            if (planStatus == "New")
+            {
+                expenditureDataLst.Add(expenditureCols.ToDictionary(k => k, v => (object)string.Empty));
+            }
 
             var retData = new
             {
-                plannerStatus = expenditureDataLst.Any() ? budgetStatus.PlannerStatus.ToString() : PlannerStatus.New.ToString(),
+                plannerStatus = planStatus,
                 columns = expenditureCols,
                 budget = expenditureDataLst.ToArray()
             };
 
             return Json(retData, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpPost]
+        public ActionResult SaveBudgetPlan(string fyscalYear, int orgId, int status, string data)
+        {
+            var updatedData = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(data);
+
+            var budgetStatus = BudgetDataService.BudgetStatuses.FirstOrDefault(x => x.OrgId == orgId && x.FyscalYear == fyscalYear);
+            if (budgetStatus == null)
+            {
+                int bId = BudgetDataService.BudgetStatuses.Max(x => x.BudgetStatusId) + 1;
+                BudgetDataService.BudgetStatuses.Add(new BudgetStatus
+                {
+                    BudgetStatusId = bId,
+                    FyscalYear = fyscalYear,
+                    OrgId = orgId,
+                    PlannerStatus = (PlannerStatus)status
+                });
+            }
+            else
+            {
+                budgetStatus.PlannerStatus = (PlannerStatus)status;
+            }
+
+            var expenses = BudgetDataService.Expenses.Where(x => x.OrgId == orgId && x.FyscalYear == fyscalYear);
+            if (expenses.Count() == 0)
+            {
+                int exId = BudgetDataService.Expenses.Max(x => x.ExpenseId) + 1;
+                foreach (var exp in updatedData)
+                {
+                    int buId = 1;
+                    var newExp = new Expense();
+                    newExp.ExpenseId = exId;
+                    newExp.FyscalYear = fyscalYear;
+                    newExp.OrgId = orgId;
+                    newExp.BudgetPlan = new List<Budget>();
+                    foreach (var item in exp)
+                    {
+                        if (item.Key == "ExpenseId")
+                        {
+                            continue;
+                        }
+                        else if (item.Key == "Expenditure")
+                        {
+                            newExp.Expenditure = item.Value.ToString();
+                        }
+                        else if(!string.IsNullOrEmpty(item.Value.ToString()))
+                        {
+                            newExp.BudgetPlan.Add(new Budget
+                            {
+                                BudgetId = buId,
+                                Month = (Month)Enum.Parse(typeof(Month), item.Key, true),
+                                Value = Convert.ToDecimal(item.Value)
+                            });
+                            buId++;
+                        }
+                    }
+                    BudgetDataService.Expenses.Add(newExp);
+                    exId++;
+                }
+            }
+
+            ViewBag.Message = "Budget Planner";
+            ViewBag.FinancialYears = new SelectList(BudgetDataService.FyscalYears);
+            ViewBag.Organization = new SelectList(BudgetDataService.Ogranizations, "OrgId", "OrgName");
+
+            return View("BudgetPlan");
         }
     }
 }
