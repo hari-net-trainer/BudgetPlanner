@@ -1,12 +1,10 @@
-﻿
+
 @{
     ViewBag.Title = "Budget Plan";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
 <div class="container">
     <h2>Budget Planner with jQuery Datatables</h2>
-
     <div class="panel panel-primary">
         <div class="panel-heading">Organization Budget Planning</div>
         <div class="panel-body">
@@ -20,7 +18,6 @@
                     @Html.DropDownList("Organization", (SelectList)ViewBag.Organization, new { @class = "form-control", role = "menu", datatoggle = "dropdown" })
                 </div>
             </div>
-
             <div class="row">
                 <div class="col-sm-12">
                     &nbsp;
@@ -37,25 +34,30 @@
                     <button type="button" class="btn btn-info btn-sm" id="btnOpen">Open</button>
                 </div>
                 <div class="col-sm-1 text-right">
-
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-sm-1">
-                &nbsp;
-            </div>
-            <div class="col-sm-10">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <div class="table-responsive">
-                            <table id="example" class="table table-striped table-hover stripe row-border order-column" style="width:100%"></table>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="panel panel-default">
+                        <div class="panel-body" style="margin-left:15px; margin-right: 15px;">
+                            <div class="table-responsive">
+                                <table id="example" class="table table-striped table-hover stripe row-border order-column" style="width:100%"></table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-1">
-                &nbsp;
+            <div class="row">
+                <div class="col-sm-1">
+                    &nbsp;
+                </div>
+                <div class="col-sm-10 text-right">
+                    <button type="button" class="btn btn-primary" id="btnSubmit">Submit</button>
+                    <button type="button" class="btn btn-success" id="btnSave">Save</button>
+                    <button type="button" class="btn btn-danger" id="btnCancel">Cancel</button>
+                </div>
+                <div class="col-sm-1">
+                </div>
             </div>
         </div>
 
@@ -74,6 +76,84 @@
 </div>
 @section scripts {
     <script>
+        var $EmptyData = {};
+        var $UpdatedData = [];
+
+        function CellTemplate(status, data, meta, colName) {
+            var dataVal = data == undefined ? "" : data;
+            var idName = "row-" + meta.row + "-" + colName;
+            var cellTemplate = "";
+            if (status != "Submited") {
+                if (colName == 'Expenditure') {
+                    cellTemplate = '<span class="input-group-addon"><i class="glyphicon glyphicon-briefcase"></i></span>' +
+                        '<input id="' + idName + '" type="text" class="form-control validate-data required" name="' + idName +
+                        '" placeholder="Plan Name" value ="' + dataVal + '" role-name="' + colName + '" />';
+                }
+                else {
+                    cellTemplate = '<span class="input-group-addon"><i class="glyphicon glyphicon-usd"></i></span>' +
+                        '<input id="' + idName + '" type="number" class="form-control validate-data anyone" name="' + idName +
+                        '" placeholder="Ammount" value ="' + dataVal + '" role-name="' + colName + '" />';
+                }
+
+                return '<div class="input-group">' + cellTemplate + '</div>';
+            }
+            return dataVal;
+        }
+
+        function ValidateData() {
+            $UpdatedData = [];
+            var isPlanDataValid = false;
+            var isBudgetAmtValid = false;
+            $("#example tbody tr").each(function (i, tr) {
+                var updatedRowData = {};
+                $(tr).find('input.validate-data').each(function (j, elm) {
+                    $(elm).tooltip("destroy");
+                    var roleName = $(elm).attr("role-name");
+                    if (elm.name.indexOf("Expenditure") >= 0) {
+                        $("[name='" + elm.name + "']").each(function (k, obj) { updatedRowData[roleName] = obj.value });
+                        if (updatedRowData[roleName] == "") {
+                            $("[name='" + elm.name + "']").parents('div.input-group').addClass("has-error");
+                            $("[name='" + elm.name + "']").tooltip({ title: "Expenditure plan name required", trigger: "hover", placement: "bottom auto", container: 'body' });
+                            isPlanDataValid = false;
+                        }
+                        else {
+                            $("[name='" + elm.name + "']").val(updatedRowData[roleName]);
+                            $("[name='" + elm.name + "']").parents('div.input-group').removeClass("has-error");
+                            isPlanDataValid = true;
+                        }
+                    }
+                    else {
+                        if (elm.value == "" && isBudgetAmtValid == false) {
+                            $(elm).parents('div.input-group').addClass("has-warning");
+                            $(elm).tooltip({ title: "Atleast one month amount required", trigger: "hover", placement: "bottom auto", container: 'body' });
+                            isBudgetAmtValid = false;
+                        }
+                        else {
+
+                            $(tr).find('div.input-group').removeClass("has-warning");
+                            isBudgetAmtValid = true;
+                        }
+                        updatedRowData[roleName] = elm.value;
+                    }
+                });
+
+                if (isPlanDataValid == false || isBudgetAmtValid == false) {
+                    return false;
+                }
+                $UpdatedData.push(updatedRowData);
+            });
+            if (isPlanDataValid == false || isBudgetAmtValid == false) {
+                $("div.validate-info").html('<div class="alert alert-danger"><strong> Error :</strong><br/>' +
+                    (isPlanDataValid == false ? '<strong> * :</strong> Expenditure Name is mandatory<br/>' : '') +
+                    (isBudgetAmtValid == false ? '<strong> # :</strong> Atleaset one month amount is need and it should be numaric' : '') +
+                    '</div > ');
+                $("div.validate-info").collapse('show');
+                return false;
+            }
+            $("div.validate-info").html('').collapse('hide');
+            return true;
+        }
+
         $(document).ready(function () {
             $("#btnOpen").click(function () {
                 $("#myModal").modal({ backdrop: "static" });
@@ -88,33 +168,35 @@
                             $('#example').DataTable().destroy();
                             $('#example').empty();
                         }
-                        //Listing Columns (Table Header) from json ajax response
+
                         var Columns = [];
                         var ColumnsDefs = [];
                         var TableHeader = "<thead><tr>";
-                        $.each(response.columns, function (key, value) {
-                            Columns.push({ "data": value });
-                            TableHeader += "<th>" + value + "</th>";
-                            var widthVal = key == 1 ? "100px" : "80px";
+                        $.each(response.columns, function (indx, colName) {
+                            Columns.push({ "data": colName });
+                            $EmptyData[colName] = "";
+                            TableHeader += "<th>" + colName + "</th>";
+                            var widthVal = indx == 1 ? "200px" : "150px";
                             ColumnsDefs.push({
-                                "visible": key > 0,
-                                "orderable": key == 1,
-                                "searchable": key == 1,
-                                "width": widthVal,
-                                render: function (data, type, row) {
-                                    return '<input class="form-control" id="' + value + '" name="' + value + '" type="text"  value = "' + data + '" />';
+                                visible: indx > 0,
+                                orderable: indx == 1,
+                                searchable: indx == 1,
+                                width: widthVal,
+                                render: function (data, type, row, meta) {
+                                    return CellTemplate(response.plannerStatus, data, meta, colName);
                                 },
-                                "targets": key
+                                targets: indx
                             });
                         });
 
                         TableHeader += "</thead></tr>";
                         $("#example").append(TableHeader);
-                        $('#example').DataTable({
+
+                        var table = $('#example').DataTable({
+                            dom: '<"row" <"custom"><"filter"f>><"row"rt><"row"<"page-info"l><"page-info"i><"page-info"p>><"row"<"validate-info">>',
                             scrollY: "300px",
                             scrollX: true,
                             scrollCollapse: true,
-                            fixedColumns: true,
                             fixedColumns: {
                                 leftColumns: 2
                             },
@@ -122,12 +204,67 @@
                             columns: Columns,
                             columnDefs: ColumnsDefs
                         });
+
+                        new $.fn.dataTable.Buttons(table, {
+                            buttons: [
+                                {
+                                    text: "Add <span class='glyphicon glyphicon-plus-sign'></span>",
+                                    className: "btn btn-primary btn-sm",
+                                    action: function (e, dt, node, conf) {
+                                        $("#myModal").modal({ backdrop: "static" });
+                                        var tbl = $("#example").DataTable();
+                                        var dataArry = [];
+                                        dataArry.push($EmptyData);
+                                        var isDataValid = ValidateData();
+                                        if (isDataValid == true) {
+                                            $.each($UpdatedData, function (indx, rowData) { dataArry.push(rowData); });
+                                            tbl.clear().draw();
+                                            for (var indx = 0; indx < dataArry.length; indx++) {
+                                                tbl.row.add(dataArry[indx]).draw(false);
+                                            }
+                                        }
+                                        $("#myModal").modal('hide');
+                                    }
+                                }]
+                        });
+
+                        $("div.page-info").addClass("col-sm-12 col-md-4");
+                        $("div.filter").addClass("col-sm-12 col-md-6");
+                        var customToolbar = $("div.custom").addClass("col-sm-12 col-md-6");
+                        if (response.plannerStatus != "Submited") {
+                            customToolbar.html(table.buttons(0, null).nodes().removeClass("dt-button"));
+                        }
+
+                        $("div.validate-info").addClass("col-sm-12 collapse");
+                        $("div.DTFC_LeftBodyWrapper").css("z-index", 10);
                         $("#myModal").modal('hide');
                     },
                     error: function (xher) {
                         $("#myModal").modal('hide');
                     }
                 });
+            });
+
+            $('#btnSave').click(function () {
+                var isDataValid = ValidateData();
+                if (isDataValid == true) {
+                    var Payload = {
+                        'fyscalYear': $("#FinancialYear").val(),
+                        'orgId': parseInt($("#Organization").val()),
+                        'status': 1,
+                        'data': JSON.stringify($UpdatedData)
+                    };
+
+                    $.ajax({
+                        url: '/Home/SaveBudgetPlan',
+                        type: 'POST',
+                        data: Payload,
+                        dataType: "json",
+                        success: function (response) { },
+                        error: function (xhr) { }
+                    });
+                }
+                return false;
             });
         });
     </script>
