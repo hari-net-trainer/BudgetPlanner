@@ -1,4 +1,4 @@
-﻿body {
+body {
     padding-top: 50px;
     padding-bottom: 20px;
 }
@@ -40,4 +40,8 @@ table {
     border-collapse: collapse;
     table-layout: fixed;
     word-wrap: break-word;
+}
+
+.validate-data + .tooltip {
+    position: fixed;
 }
